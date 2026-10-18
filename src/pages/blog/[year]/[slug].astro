@@ -1,0 +1,92 @@
+---
+import { render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import { getPosts, postOgImage, postUrl, tagUrl, type Post } from '../../../lib/posts';
+
+export async function getStaticPaths() {
+  // Newest first, so the post before in the list is newer.
+  const posts = await getPosts();
+  return posts.map((post, i) => ({
+    params: { year: String(post.data.date.getUTCFullYear()), slug: post.id },
+    props: { post, newer: posts[i - 1], older: posts[i + 1] },
+  }));
+}
+
+interface Props {
+  post: Post;
+  newer?: Post;
+  older?: Post;
+}
+
+const { post, newer, older } = Astro.props;
+const { Content, headings } = await render(post);
+// Contents list only for posts long enough to need one.
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const showToc = toc.length >= 3;
+const longDate = (d: Date) =>
+  d.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+const { date, updated } = post.data;
+---
+
+<Base
+  title={post.data.title}
+  description={post.data.description}
+  ogImage={postOgImage(post)}
+  ogType="article"
+>
+  <article data-pagefind-body>
+    <h1>{post.data.title}</h1>
+    <p>
+      <time datetime={isoDate(date)}>{longDate(date)}</time>
+      {
+        updated && (
+          <>
+            {' '}&middot; Updated <time datetime={isoDate(updated)}>{longDate(updated)}</time>
+          </>
+        )
+      }
+    </p>
+    {
+      showToc && (
+        <nav class="toc" aria-label="Contents" data-pagefind-ignore>
+          <p><strong>Contents</strong></p>
+          <ul>
+            {toc.map((h) => (
+              <li class={h.depth === 3 ? 'sub' : undefined}>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+    <Content />
+    {
+      post.data.tags.length > 0 && (
+        <p data-pagefind-ignore>
+          Tags:{' '}
+          {post.data.tags.map((tag, i) => (
+            <>
+              {i > 0 && ', '}
+              <a href={tagUrl(tag)}>{tag}</a>
+            </>
+          ))}
+        </p>
+      )
+    }
+  </article>
+  {
+    (older || newer) && (
+      <nav class="adjacent" aria-label="More posts">
+        <span>{older && <a href={postUrl(older)}>&larr; {older.data.title}</a>}</span>
+        <span>{newer && <a href={postUrl(newer)}>{newer.data.title} &rarr;</a>}</span>
+      </nav>
+    )
+  }
+</Base>

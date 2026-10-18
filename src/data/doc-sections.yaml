@@ -1,0 +1,9 @@
+# Documentation sections, shown on /docs/ in `order`. The id is the
+# folder name under src/content/docs/ and the URL /docs/<id>/, so it
+# never changes once published. Schema in src/content.config.ts.
+- id: railcom
+  title: RailCom
+  description: >-
+    The DCC feedback channel: how a decoder talks back to the
+    command station and to detectors on the track.
+  order: 1

@@ -1,0 +1,75 @@
+---
+import { render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import DecoderTable from '../../../components/DecoderTable.astro';
+import {
+  docOgImage,
+  docPageId,
+  docSectionId,
+  getDocs,
+  getSections,
+  sectionUrl,
+  type Doc,
+} from '../../../lib/docs';
+
+export async function getStaticPaths() {
+  const docs = await getDocs();
+  const titles = new Map((await getSections()).map((s) => [s.id, s.data.title]));
+  return docs.map((doc) => {
+    const sectionId = docSectionId(doc);
+    const sectionTitle = titles.get(sectionId);
+    if (!sectionTitle) {
+      // A page in a folder with no entry in doc-sections.yaml.
+      throw new Error(`docs/${doc.id}: no section "${sectionId}" in src/data/doc-sections.yaml`);
+    }
+    return {
+      params: { section: sectionId, page: docPageId(doc) },
+      props: { doc, sectionTitle },
+    };
+  });
+}
+
+interface Props {
+  doc: Doc;
+  sectionTitle: string;
+}
+
+const { doc, sectionTitle } = Astro.props;
+const { Content, headings } = await render(doc);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const updated = doc.data.updated;
+const updatedText = updated.toLocaleDateString('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<Base title={doc.data.title} description={doc.data.description} ogImage={docOgImage(doc)} ogType="article">
+  <p data-pagefind-ignore>
+    <a href="/docs/">Documentation</a>{' '}&rsaquo;{' '}<a href={sectionUrl(docSectionId(doc))}>{sectionTitle}</a>
+  </p>
+  <article class="doc" data-pagefind-body>
+    <h1>{doc.data.title}</h1>
+    <p>
+      Last updated <time datetime={updated.toISOString().slice(0, 10)}>{updatedText}</time>
+    </p>
+    {
+      toc.length >= 3 && (
+        <nav class="toc" aria-label="Contents" data-pagefind-ignore>
+          <p><strong>Contents</strong></p>
+          <ul>
+            {toc.map((h) => (
+              <li class={h.depth === 3 ? 'sub' : undefined}>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+    <Content />
+    {doc.data.table === 'decoders' && <DecoderTable />}
+  </article>
+</Base>

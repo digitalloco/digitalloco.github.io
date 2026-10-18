@@ -1,0 +1,28 @@
+---
+import Base from '../../../layouts/Base.astro';
+import DocList from '../../../components/DocList.astro';
+import { docsIn, getDocs, getSections, type Doc, type DocSection } from '../../../lib/docs';
+
+export async function getStaticPaths() {
+  const docs = await getDocs();
+  const sections = await getSections();
+  return sections.map((section) => ({
+    params: { section: section.id },
+    props: { section, docs: docsIn(docs, section.id) },
+  }));
+}
+
+interface Props {
+  section: DocSection;
+  docs: Doc[];
+}
+
+const { section, docs } = Astro.props;
+---
+
+<Base title={section.data.title} description={section.data.description}>
+  <p><a href="/docs/">Documentation</a></p>
+  <h1>{section.data.title}</h1>
+  <p>{section.data.description}</p>
+  <DocList docs={docs} />
+</Base>

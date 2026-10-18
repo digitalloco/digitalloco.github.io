@@ -1,0 +1,34 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Search" description="Search the digitalloco posts.">
+  <Fragment slot="head">
+    <!-- Pagefind writes its index and UI into /pagefind/ after the
+         build; under `npm run dev` they do not exist and search is empty. -->
+    <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+    <script is:inline src="/pagefind/pagefind-ui.js"></script>
+  </Fragment>
+  <h1>Search</h1>
+  <div id="search"></div>
+  <noscript>
+    <p>Search needs JavaScript. The <a href="/blog/archive/">archive</a> lists every post.</p>
+  </noscript>
+  <style is:global>
+    /* Pagefind's UI in the browser's own colours, so it follows light/dark. */
+    #search {
+      --pagefind-ui-font: inherit;
+      --pagefind-ui-text: CanvasText;
+      --pagefind-ui-background: Canvas;
+      --pagefind-ui-primary: LinkText;
+      --pagefind-ui-border: #8886;
+      --pagefind-ui-tag: #8883;
+    }
+  </style>
+  <script is:inline>
+    window.addEventListener('DOMContentLoaded', function () {
+      if (typeof PagefindUI === 'undefined') return;
+      new PagefindUI({ element: '#search', showImages: false, showSubResults: true });
+    });
+  </script>
+</Base>

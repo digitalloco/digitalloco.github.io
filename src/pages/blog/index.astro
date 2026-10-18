@@ -1,0 +1,13 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../../components/PostList.astro';
+import { getPosts } from '../../lib/posts';
+
+const posts = await getPosts();
+---
+
+<Base title="Blog" description="Notes from the digitalloco workbench.">
+  <h1>Blog</h1>
+  <PostList posts={posts} />
+  {posts.length > 0 && <p><a href="/blog/archive/">Archive by year</a> &middot; <a href="/tags/">Tags</a></p>}
+</Base>

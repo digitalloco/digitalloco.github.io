@@ -1,0 +1,26 @@
+---
+import Base from '../../layouts/Base.astro';
+import DocList from '../../components/DocList.astro';
+import { docsIn, getDocs, getSections, sectionUrl } from '../../lib/docs';
+
+const docs = await getDocs();
+const sections = await getSections();
+---
+
+<Base title="Documentation" description="Reference notes on the standards and hardware behind digitalloco.">
+  <h1>Documentation</h1>
+  <p>
+    Reference notes on the standards and hardware behind the project.
+    Facts are sourced and dated; our own opinions are marked as
+    commentary.
+  </p>
+  {
+    sections.map((section) => (
+      <section>
+        <h2><a href={sectionUrl(section.id)}>{section.data.title}</a></h2>
+        <p>{section.data.description}</p>
+        <DocList docs={docsIn(docs, section.id)} />
+      </section>
+    ))
+  }
+</Base>

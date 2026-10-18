@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import PostList from '../components/PostList.astro';
+import { Content as Intro } from '../content/home.md';
+import { getPosts } from '../lib/posts';
+
+const projects = await getCollection('projects');
+const latest = (await getPosts()).slice(0, 5);
+---
+
+<Base>
+  <Intro />
+
+  {
+    projects.length > 0 && (
+      <>
+        <h2>Projects</h2>
+        <ul>
+          {projects.map((p) => (
+            <li>
+              <a href={p.data.url}>{p.id}</a>: {p.data.description}
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+
+  <h2>Latest posts</h2>
+  <PostList posts={latest} />
+  {latest.length > 0 && <p><a href="/blog/">All posts</a></p>}
+</Base>

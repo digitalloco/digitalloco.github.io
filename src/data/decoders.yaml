@@ -1,0 +1,105 @@
+# The RailCom decoder index, shown on /docs/railcom/decoders/. One
+# entry per decoder model and firmware version. The columns and the
+# allowed values are in src/lib/decoders.ts; the schema in
+# src/content.config.ts. The build fails on a misspelt key or value.
+#
+# features: every key listed in FEATURES, each yes | no | tbd.
+# source:   maker | test | both | tbd  (where the facts come from).
+# firmware: optional; omit while unknown and the table shows TBD.
+# url:      optional; the maker's public document the row was read
+#           against, linked from the row's Notes popup.
+# notes:    optional; plain prose on where the values came from and
+#           any doubt about them, shown in the same popup.
+#
+# - id: esu-lokpilot-5
+#   maker: ESU
+#   model: LokPilot 5
+#   firmware: "5.x"
+#   source: tbd
+#   features:
+#     ch1: tbd
+#     ...
+- id: esu-lokpilot-5
+  maker: ESU
+  model: LokPilot 5
+  source: tbd
+  features:
+    ch1: tbd
+    pom: tbd
+    xpom: tbd
+    dcca: tbd
+    speed: tbd
+    load: tbd
+    temp: tbd
+    volts: tbd
+    fuel: tbd
+    stats: tbd
+    dir: tbd
+    search: tbd
+    hicur: tbd
+- id: dccconcepts-zen-black
+  maker: DCCconcepts
+  model: Zen Black (8-pin)
+  firmware: "42"
+  url: https://www.gaugemasterretail.com/media/downloads/Zen_Black_Complete.pdf
+  notes: >-
+    Bench only, 16 October 2026, an 8-pin NEM 652 Zen Black reporting
+    firmware 42 in CV7. With RailCom enabled (CV29 bit 3) and both
+    channels enabled in CV28, driven and left over a minute after
+    power on, the decoder sent nothing in any of 1,446 cutouts. Every
+    feature is therefore marked absent, but this awaits the maker's
+    confirmation that the decoder has no RailCom transmitter, rather
+    than this one being faulty or needing some other setting. The
+    maker's Zen manual mentions RailCom only as the CV29 option,
+    which it recommends leaving off, and lists no RailCom features.
+    Returned to factory values afterwards.
+  source: test
+  features:
+    ch1: no
+    pom: no
+    xpom: no
+    dcca: no
+    search: no
+    speed: no
+    load: no
+    temp: no
+    volts: no
+    fuel: no
+    stats: no
+    dir: no
+    hicur: tbd
+- id: zimo-mn150
+  maker: ZIMO
+  model: MN150
+  firmware: "5.29"
+  url: https://www.zimo.at/web2010/documents/MS-MN-Decoders_EN.pdf
+  notes: >-
+    Read against the RailCom chapter and the CV28 and CV99 tables of
+    ZIMO's MS/MN manual, and checked on our bench on 15 and 16
+    October 2026 with a decoder new from the packet on firmware
+    5.29, which is ZIMO's current release (5.29.0, 24 July 2026).
+    The maker documents the address broadcast, CV reading on the
+    main, DCC-A, the speed, temperature, track-voltage,
+    quality-of-service and direction-state reports, and the
+    on-track search; the bench saw all of them. Load is
+    No because the manual lists motor current as planned and the
+    bench saw no load report. Fuel is No because it is in neither.
+    XPOM is No because an XPOM read got an acknowledgement but no
+    data; the manual does not mention it. High current is TBD: the
+    manual gives CV28 bit 6 for large-scale decoders and does not
+    say whether the MN150 has it.
+  source: both
+  features:
+    ch1: yes
+    pom: yes
+    xpom: no
+    dcca: yes
+    speed: yes
+    load: no
+    temp: yes
+    volts: yes
+    fuel: no
+    stats: yes
+    dir: yes
+    search: yes
+    hicur: tbd

@@ -1,0 +1,25 @@
+---
+import { docUrl, type Doc } from '../lib/docs';
+
+interface Props {
+  docs: Doc[];
+}
+
+const { docs } = Astro.props;
+---
+
+{
+  docs.length > 0 ? (
+    <ul class="posts">
+      {docs.map((doc) => (
+        <li>
+          <a href={docUrl(doc)}>{doc.data.title}</a>
+          <br />
+          {doc.data.description}
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>No pages yet.</p>
+  )
+}

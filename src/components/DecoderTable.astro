@@ -1,0 +1,299 @@
+---
+// The RailCom decoder index as a table, generated from
+// src/data/decoders.yaml. Columns come from FEATURES in
+// src/lib/decoders.ts. Styled as a compatibility table: tick, cross
+// and question mark on tinted cells, a two-row grouped header with
+// short headings, and the identity columns stuck to the left when
+// the table scrolls. Every symbol has its word in a visually-hidden
+// span, so the table reads without colour, in a screen reader and
+// when copied. A row with notes or a maker link gets a button that
+// opens a native popover (no script); an older browser ignores the
+// attribute and shows the notes inline below the table instead.
+import { getCollection } from 'astro:content';
+import {
+  FEATURES,
+  GROUPS,
+  SOURCE_SYMBOL,
+  SOURCE_TEXT,
+  STATE_SYMBOL,
+  STATE_TEXT,
+} from '../lib/decoders';
+
+// A row is untested while its source is tbd: nothing in it has been
+// checked against anything. Untested rows are greyed and sort last.
+const untested = (row: { data: { source: string } }) => row.data.source === 'tbd';
+// Rows are ordered most functional first: by the count of features
+// present, then by name. The page says so.
+const present = (row: { data: { features: Record<string, string> } }) =>
+  Object.values(row.data.features).filter((v) => v === 'yes').length;
+const rows = (await getCollection('decoders')).sort((a, b) => {
+  const byTested = Number(untested(a)) - Number(untested(b));
+  if (byTested !== 0) return byTested;
+  const byPresent = present(b) - present(a);
+  if (byPresent !== 0) return byPresent;
+  return `${a.data.maker} ${a.data.model}`.localeCompare(`${b.data.maker} ${b.data.model}`, 'en-GB');
+});
+const hasNotes = (row: (typeof rows)[number]) => row.data.notes || row.data.url;
+const groupSpan = (group: string) => FEATURES.filter((f) => f.group === group).length;
+---
+
+{
+  rows.length > 0 ? (
+    <>
+      <table class="decoders">
+        <thead>
+          <tr class="groups">
+            <th scope="colgroup" class="identity" />
+            {GROUPS.map((g) => (
+              <th scope="colgroup" colspan={groupSpan(g)}>
+                {g}
+              </th>
+            ))}
+            <th scope="colgroup" colspan="2" />
+          </tr>
+          <tr>
+            <th scope="col" class="identity sticky">Decoder</th>
+            {FEATURES.map((f) => (
+              <th scope="col" class="vertical" title={`${f.label}: ${f.note}`}>
+                <span>{f.short}</span>
+              </th>
+            ))}
+            <th scope="col" class="vertical" title="Where the row's facts come from">
+              <span>Source</span>
+            </th>
+            <th scope="col">
+              <span class="sr-only">Notes</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr class={untested(row) ? 'untested' : undefined}>
+              <td class="identity sticky">
+                {row.data.maker} {row.data.model}
+                <br />
+                <small>
+                  {row.data.firmware ?? 'firmware TBD'}
+                  {untested(row) && <>, untested</>}
+                </small>
+              </td>
+              {FEATURES.map((f) => {
+                const state = row.data.features[f.key];
+                return (
+                  <td class={`state ${state}`}>
+                    <span aria-hidden="true">{STATE_SYMBOL[state]}</span>
+                    <span class="sr-only">{STATE_TEXT[state]}</span>
+                  </td>
+                );
+              })}
+              <td class="state source">
+                <span aria-hidden="true">{SOURCE_SYMBOL[row.data.source]}</span>
+                <span class="sr-only">{SOURCE_TEXT[row.data.source]}</span>
+              </td>
+              <td>
+                {hasNotes(row) && (
+                  <button type="button" class="notes" popovertarget={`notes-${row.id}`} aria-label={`Notes on ${row.data.maker} ${row.data.model}`}>
+                    i
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="key">
+        <span class="state yes">&#x2713;</span> present
+        <span class="state no">&#x2717;</span> absent
+        <span class="state tbd">?</span> not established.
+        Source: M maker's documentation, T our bench, B both, ? none yet.
+        A greyed row is untested: nothing in it has been checked yet.
+        Hover a heading for what the column means, or open the list below.
+      </p>
+      {rows.filter(hasNotes).map((row) => (
+        <div popover id={`notes-${row.id}`} class="decoder-notes">
+          <p>
+            <strong>
+              {row.data.maker} {row.data.model}
+            </strong>
+            {row.data.firmware && <>, firmware {row.data.firmware}</>}
+          </p>
+          {row.data.notes && <p>{row.data.notes}</p>}
+          {row.data.url && (
+            <p>
+              <a href={row.data.url}>Maker documentation</a>
+            </p>
+          )}
+          <p>
+            <button type="button" popovertarget={`notes-${row.id}`} popovertargetaction="hide">
+              Close
+            </button>
+          </p>
+        </div>
+      ))}
+    </>
+  ) : (
+    <p>No decoders listed yet.</p>
+  )
+}
+
+<details>
+  <summary>What the columns mean</summary>
+  <dl>
+    <dt>Decoder</dt>
+    <dd>
+      Maker and model, with the firmware version the row describes beneath them; a feature can
+      arrive in an update.
+    </dd>
+    {
+      FEATURES.map((f) => (
+        <>
+          <dt>
+            {f.short}: {f.label}
+          </dt>
+          <dd>{f.note}</dd>
+        </>
+      ))
+    }
+    <dt>Source</dt>
+    <dd>
+      Where the row's facts come from: <em>M</em>, the maker's own documentation; <em>T</em>, our
+      bench; <em>B</em>, both; or <em>?</em>, not yet established.
+    </dd>
+    <dt>i</dt>
+    <dd>Opens the row's notes and the maker document it was read against.</dd>
+  </dl>
+  <p>
+    In every feature column a tick means present, a cross absent, and a question mark not yet
+    established. A blank is never used, so a missing fact is always visible.
+  </p>
+</details>
+
+<style>
+  /* Compatibility-table styling for this component only. Colours go
+     through light-dark() so the page's theme toggle applies. */
+  .decoders {
+    font-size: 0.9rem;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .decoders th,
+  .decoders td {
+    padding: 0.2rem 0.35rem;
+    white-space: nowrap;
+  }
+  .decoders thead th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    vertical-align: bottom;
+  }
+  .decoders .groups th {
+    font-weight: normal;
+    color: light-dark(#555, #aaa);
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .decoders th.identity {
+    text-align: left;
+  }
+  .decoders td.identity {
+    vertical-align: top;
+  }
+  .decoders td.identity small {
+    color: light-dark(#555, #aaa);
+  }
+  /* Feature headings run bottom-to-top so the columns can be narrow. */
+  .decoders th.vertical {
+    padding: 0.3rem 0.2rem;
+    vertical-align: bottom;
+  }
+  .decoders th.vertical span {
+    display: inline-block;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: left;
+  }
+  /* Maker and Decoder stay put when the table scrolls sideways; the
+     background stops scrolled cells showing through. */
+  .decoders .sticky {
+    position: sticky;
+    left: 0;
+    background: Canvas;
+    z-index: 1;
+  }
+  .decoders td.state {
+    text-align: center;
+    font-weight: 600;
+  }
+  /* Untested rows: everything in them is a placeholder. */
+  .decoders tr.untested td {
+    opacity: 0.45;
+  }
+  .state.yes {
+    background: light-dark(#d9f0d9, #1e3d1e);
+    color: light-dark(#1b5e20, #a5d6a7);
+  }
+  .state.no {
+    background: light-dark(#f8dcdc, #4a1f1f);
+    color: light-dark(#b71c1c, #ef9a9a);
+  }
+  .state.tbd {
+    background: light-dark(#ececec, #333);
+    color: light-dark(#555, #bbb);
+  }
+  .decoders td.source {
+    background: none;
+    color: inherit;
+  }
+  .decoders button.notes {
+    font: inherit;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.05rem 0.45rem;
+    border: 1px solid #8886;
+    border-radius: 50%;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+  }
+  .key {
+    font-size: 0.85rem;
+  }
+  .key .state {
+    display: inline-block;
+    padding: 0 0.4rem;
+    margin-left: 0.6rem;
+    font-weight: 600;
+  }
+  .key .state:first-child {
+    margin-left: 0;
+  }
+  details {
+    margin: 1rem 0;
+  }
+  summary {
+    cursor: pointer;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  /* The popup: page colours, a border, a readable width. */
+  .decoder-notes {
+    max-width: 36rem;
+    padding: 1rem;
+    border: 1px solid #8886;
+    background: Canvas;
+    color: CanvasText;
+  }
+  .decoder-notes p {
+    margin: 0 0 0.75rem;
+  }
+  .decoder-notes p:last-child {
+    margin-bottom: 0;
+  }
+</style>

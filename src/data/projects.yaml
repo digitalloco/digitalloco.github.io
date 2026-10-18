@@ -1,0 +1,8 @@
+# Repositories featured on the home page, in display order. The
+# Projects section is hidden while this list is empty. The schema is
+# in src/content.config.ts. Each entry:
+#
+# - id: digitalloco-example
+#   url: https://github.com/digitalloco/digitalloco-example
+#   description: One line saying what it is.
+[]
